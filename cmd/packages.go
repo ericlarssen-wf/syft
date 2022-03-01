@@ -108,6 +108,11 @@ func setPackageFlags(flags *pflag.FlagSet) {
 		"file to write the default report output to (default is STDOUT)",
 	)
 
+	flags.StringP(
+		"platform", "", "",
+		"an optional platform specifier for container image sources (e.g. 'linux/arm64', 'linux/arm64/v8', 'arm64', 'linux')",
+	)
+
 	// Upload options //////////////////////////////////////////////////////////
 	flags.StringP(
 		"host", "H", "",
@@ -170,6 +175,10 @@ func bindExclusivePackagesConfigOptions(flags *pflag.FlagSet) error {
 	}
 
 	if err := viper.BindPFlag("exclude", flags.Lookup("exclude")); err != nil {
+		return err
+	}
+
+	if err := viper.BindPFlag("platform", flags.Lookup("platform")); err != nil {
 		return err
 	}
 
@@ -255,7 +264,7 @@ func generateSBOM(userInput string, errs chan error) (*sbom.SBOM, *source.Source
 		return nil, nil, err
 	}
 
-	src, cleanup, err := source.New(userInput, appConfig.Registry.ToOptions(), appConfig.Exclusions)
+	src, cleanup, err := source.New(userInput, appConfig.Registry.ToOptions(), appConfig.Platform, appConfig.Exclusions)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to construct source from user input %q: %w", userInput, err)
 	}
